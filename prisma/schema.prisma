@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model RelationshipManager {
+  id      String   @id @default(cuid())
+  name    String
+  title   String
+  email   String
+  phone   String
+  clients Client[]
+}
+
+model Client {
+  id                     String    @id @default(cuid())
+  fullName               String
+  email                  String    @unique
+  password               String
+  company                String?
+  countryCode            String
+  phone                  String
+  requirement            String
+  projectType            String
+  billingCycle           String?
+  projectCost            Float?
+  projectStatus          String    @default("planning")
+  projectProgress        Int       @default(0)
+  lastUpdateAt           DateTime  @default(now())
+  emailVerified          Boolean   @default(false)
+  emailVerifyToken        String?  @unique
+  emailVerifyExpires      DateTime?
+  relationshipManagerId  String?
+  relationshipManager    RelationshipManager? @relation(fields: [relationshipManagerId], references: [id])
+  invoices               Invoice[]
+  rmChangeRequests       RMChangeRequest[]
+  updateLogs             UpdateLog[]
+  supportTickets         SupportTicket[]
+  createdAt              DateTime @default(now())
+}
+
+model Invoice {
+  id                     String    @id @default(cuid())
+  clientId               String
+  client                 Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  number                 String    @unique
+  amount                 Float
+  status                 String    @default("due")
+  issuedAt               DateTime  @default(now())
+  dueAt                  DateTime
+  paidAt                 DateTime?
+  razorpayPaymentLinkId  String?
+  razorpayPaymentId      String?
+}
+
+model RMChangeRequest {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  reason    String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+}
+
+model UpdateLog {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title     String
+  note      String
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  subject   String
+  message   String
+  priority  String   @default("normal")
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
